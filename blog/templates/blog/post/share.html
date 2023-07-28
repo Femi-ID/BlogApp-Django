@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+  {% extends 'blog/base.html' %}
+  {% block title %} Share Post {% endblock %}
+
+  {% block content %}
+    {% if sent %}
+      <h1>Email sent successfully!</h1>
+      <p>
+        {{ post.title}} was successfully sent to {{ form.cleaned_data.to }}
+      </p>
+      <p><a href="{{ post.get_absolute_url }}">Back</a></p>
+      <br>
+      <a href="{% url 'blog:post_detail' post.publish.year post.publish.month post.publish.day post.slug  %}">trial</a>
+    {% else %}
+      <h1>Share  "{{ post.title }}" by e-mail</h1>
+      <form method="post">
+        {{ form.as_p }}
+        {% csrf_token %}
+        <input type="submit" value="Send E-mail">
+      </form>
+    {% endif %}
+  {% endblock %}
+
+</body>
+</html>
