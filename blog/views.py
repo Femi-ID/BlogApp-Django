@@ -4,6 +4,8 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.views.generic import ListView
 from .forms import EmailForm, CommentForm
 from django.core.mail import send_mail
+from taggit.models import Tag
+from django.db.models import Count
 # Create your views here.
 
 
@@ -15,8 +17,16 @@ class PostListView(ListView):
     template_name = 'blog/post/list.html'
 
 
-def post_list(request):
+def post_list(request, tag_slug=None):
     objects_list = Post.published.all()
+    tag = None
+
+    # let users list all posts tagged with a specific tag.
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        # Since this is a many-to-many relationship, you filter posts by tags contained in a given list.
+        objects_list = objects_list.filter(tags__in=[tag])
+
     paginator = Paginator(objects_list, 3)  # 3 posts per page
     page = request.GET.get('page')
     try:
@@ -27,7 +37,8 @@ def post_list(request):
     except EmptyPage:
         # If page is out of range deliver the last page of results
         posts = paginator.page(paginator.num_pages)
-    return render(request, 'blog/post/list.html', {'posts': posts, 'page': page})
+
+    return render(request, 'blog/post/list.html', {'posts': posts, 'page': page, 'tag': tag})
 
 
 def post_detail(request, year, month, day, post):
@@ -35,7 +46,32 @@ def post_detail(request, year, month, day, post):
                              publish__year=year, publish__month=month,
                              publish__day=day)
 
-    return render(request, 'blog/post/detail.html', {'post': post})
+    # List of active comments for this post
+    comments = post.comments.filter(active=True)
+    new_comment = None
+
+    if request.method == 'POST':
+        comment_form = CommentForm(data=request.POST)
+        if comment_form.is_valid():
+            # Create Comment object but don't save.
+            # The save() method creates an instance of the model that the form is linked to
+            new_comment = comment_form.save(commit=False)
+            # Assign the current post to the comment
+            new_comment.post = post
+            new_comment.save()
+    else:
+        comment_form = CommentForm()
+
+    # List of similar posts
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish')[:4]
+    # djangotaggit also includes a similar_objects() manager that you can use to retrieve objects by shared tags.
+    # Take a look at all django-taggit managers at https://django-taggit.readthedocs.io/en/latest/api.html.
+    return render(request, 'blog/post/detail.html', {'post': post, 'comments': comments,
+                                                     'new_comment': new_comment,
+                                                     'comment_form': comment_form,
+                                                     'similar_posts': similar_posts})
 
 
 def post_share(request, post_id):
