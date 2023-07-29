@@ -7,6 +7,9 @@ from django.core.mail import send_mail
 from taggit.models import Tag
 from django.db.models import Count
 # Create your views here.
+# Always make sure u don't make changes after committing and pushing changes to 'master'
+# (when you're still on the master branch) with the mindset of switching branches.
+# make sure the last thing you do before leaving a branch to work on another is to: (add file and commit file)
 
 
 class PostListView(ListView):
