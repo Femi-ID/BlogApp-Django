@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
+from taggit.managers import TaggableManager
 
 # You can take a look at all the possible options at:
 # https://docs.djangoproject.com/en/3.0/ref/models/fields/#django.db.models.
@@ -47,6 +48,8 @@ class Post(models.Model):
         return reverse('blog:post_detail', args=[self.publish.year, self.publish.month,
                                                  self.publish.day, self.slug])
 
+    tags = TaggableManager()
+
 
 class Comments(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
@@ -61,7 +64,7 @@ class Comments(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ('created',)
+        ordering = ('-created',)
 
     def __str__(self):
         return f"Comment by {self.name} on {self.post}"
