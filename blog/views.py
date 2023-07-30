@@ -2,14 +2,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.views.generic import ListView
-from .forms import EmailForm, CommentForm
+from .forms import EmailForm, CommentForm, SearchForm
 from django.core.mail import send_mail
 from taggit.models import Tag
 from django.db.models import Count
+from django.contrib.postgres.search import SearchVector
 # Create your views here.
-# Always make sure u don't make changes after committing and pushing changes to 'master'
-# (when you're still on the master branch) with the mindset of switching branches.
-# make sure the last thing you do before leaving a branch to work on another is to: (add file and commit file)
+"""Always make sure u don't make changes after committing and pushing changes to 'master'
+(when you're still on the master branch) with the mindset of switching branches.
+make sure the last thing you do before leaving a branch to work on another is to: (add file and commit file)"""
 
 
 class PostListView(ListView):
@@ -98,3 +99,6 @@ def post_share(request, post_id):
 
 # The send_mail() function takes the subject, message, sender, and list of recipients as required arguments.
 # from django.core.mail import mail: send_mail('', '', '', [])
+
+
+
