@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+  {% extends 'blog/base.html' %}
+  {% load blog_tags %}
+  {% block title  %} Search {% endblock %}
+
+  {% block content %}
+
+    {% if query %}
+      <h1>Posts containing '{{ query }}'</h1>
+      <h3>
+        {% with results.count as total_results %}
+          Found {{ total_results }} results{{ total_results|pluralize }}
+        {% endwith %}
+      </h3>
+
+      {% for post in results %}
+        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+        <button><a href="{% url 'blog:post_list' %}">Back Home</a></button>
+      {% empty %}
+        <a href="{% url 'blog:post_list' %}">No result for your query!</a>
+      {% endfor %}
+    {% else %}
+      <h1>Search for posts</h1>
+      <form method="get">
+        {{ form.as_p }}
+        <input type="submit" value="Search">
+        <button><a href="{% url 'blog:post_list' %}">Back Home</a></button>
+      </form>
+
+    {% endif %}
+  {% endblock %}
+</body>
+</html>

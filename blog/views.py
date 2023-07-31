@@ -6,7 +6,7 @@ from .forms import EmailForm, CommentForm, SearchForm
 from django.core.mail import send_mail
 from taggit.models import Tag
 from django.db.models import Count
-from django.contrib.postgres.search import SearchVector
+from django.contrib.postgres.search import SearchVector, SearchRank, SearchQuery, TrigramSimilarity
 # Create your views here.
 """Always make sure u don't make changes after committing and pushing changes to 'master'
 (when you're still on the master branch) with the mindset of switching branches.
@@ -101,4 +101,37 @@ def post_share(request, post_id):
 # from django.core.mail import mail: send_mail('', '', '', [])
 
 
+def post_search(request):
+    form = SearchForm()
+    query = None
+    results = []
+
+    if 'query' in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            search_vector = SearchVector('title', weight='A') + SearchVector('body', weight='B')
+            search_query = SearchQuery(query)
+            results = Post.published.annotate(rank=SearchRank(search_vector, search_query)
+                                              ).filter(rank__gte=0.3).order_by('-rank')
+            # The default weights are D, C, B, and A, and they refer to the
+            # numbers 0.1, 0.2, 0.4, and 1.0, respectively.
+    return render(request, 'blog/post/search.html', {'form': form, 'query': query,
+                                                     'results': results})
+
+
+
+# results = Post.published.annotate(similarity=TrigramSimilarity('title', query),).filter(similarity__gt=0.1).order_by('-similarity')
+# A trigram is a group of three consecutive characters. You can measure the similarity of two strings by counting the number of trigrams that they share.
+
+# results = Post.published.annotate(rank=SearchRank(search_vector, search_query)).filter(rank__gte=0.3).order_by('-rank')
+# The default weights are D, C, B, and A, and they refer to the numbers 0.1, 0.2, 0.4, and 1.0, respectively.
+
+# results = Post.published.annotate(search=search_vector, rank=SearchRank(search_vector, search_query)).filter(search=search_query).order_by('-rank')
+# SearchQuery class to translate terms into a search query object.
+# By default, the terms are passed through stemming algorithms, which helps you to obtain better matches.
+# SearchRank - to order results by relevancy. PostgreSQL provides a ranking function
+# that orders results based on how often the query terms appear and how close together they are.
+
+# results = Post.published.annotate(search=SearchVector('title', 'body'),).filter(search=query)
 
