@@ -1,0 +1,5 @@
+
+blog/__pycache__/
+myblog_django/__pycache__/
+*.sqlite3
+
